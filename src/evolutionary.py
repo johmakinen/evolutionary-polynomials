@@ -1,3 +1,4 @@
+"Main evolutionary tools"
 # Imports
 import random
 import string
@@ -22,7 +23,11 @@ def init_logger(
     Returns:
         logging.Logger: Current logger
     """
-    os.remove(log_file)
+    if os.path.exists(log_file):
+        os.remove(log_file)
+
+    with open(log_file, mode="w", encoding="utf-8"):
+        pass
 
     logger_ = logging.getLogger(__name__)
 
@@ -74,25 +79,44 @@ class Agent:
     def __post_init__(self):
         self.sort_index = self.error
 
+    def predict_(self, x, use_bias):
+        if not use_bias:
+            y_pred = np.array(self.coef) * np.power(
+                np.array([x] * len(self.coef)).T, np.arange(1, len(self.coef) + 1, 1)
+            )
+        else:
+            y_pred = np.array(self.coef)[0] + np.power(
+                np.array([x] * len(self.coef[1:])).T,
+                np.arange(1, len(self.coef[1:]) + 1, 1),
+            )
+        y_pred = np.sum(y_pred, axis=1)
+        return y_pred
+
 
 # Create data
-def create_data(N: int = 100) -> tuple[np.ndarray, np.ndarray]:
+def create_data(
+    bias: bool = False, degree: int = 1, N: int = 20
+) -> tuple[np.ndarray, np.ndarray]:
     """Creates the data from a given polynomial.
 
     Args:
         N (int, optional): How many data points are wanted. Defaults to 100.
+        bias (bool, optional): Use bias term?. Defaults to 100.
+        degree (int, optional): How many degrees in the polynomial?. Defaults to 1.
 
     Returns:
         tuple[np.ndarray, np.ndarray]: _description_
     """
     x = np.arange(0, N)
-    k = 3.14
-    b = 7
-    y = k * x + b
-    y += np.random.normal(scale=50, size=y.shape)
-    logger.info(
-        "Created %d datapoints with coefficients with y = %.2fx + %.2f", N, k, b
-    )
+    k = np.random.normal(loc=5, scale=2, size=degree)
+    b = 15 if bias else 0
+    perfect_agent = Agent(name="perfektio", coef=[b, *k])
+
+    y = perfect_agent.predict_(x, use_bias=bias)
+    # Add noise
+    y += np.random.normal(loc=y.mean(), scale=y.std() / 2, size=y.shape)
+    logger.info("Created %d datapoints with coefficients with y = %sx + %s", N, k, b)
+
     return x, y
 
 
@@ -123,7 +147,10 @@ def initialise_agents(n_coefs: int, n: int = 10) -> list[Agent]:
 
 # Compute error of an agent
 def compute_error(
-    x: Iterable[Union[float, int]], y: Iterable[Union[float, int]], agent: Agent
+    x: Iterable[Union[float, int]],
+    y: Iterable[Union[float, int]],
+    agent: Agent,
+    use_bias: bool,
 ) -> None:
     """Computed the error for a single agent. Currently uses simple ordinary least squares
 
@@ -131,14 +158,22 @@ def compute_error(
         x (Iterable[Union[float,int]]): x values
         y (Iterable[Union[float,int]]): y values
         agent (Agent)
+        use_bias (bool): Is bias term used?
     """
-    agent.error = np.sum((y - (agent.coef[0] + agent.coef[1] * x)) ** 2)
+    # if use_bias:
+    #     Xs = (agent.coef[0] + np.array(agent.coef[1:].reshape(-1, 1)) * x)
+    # else:
+    #     Xs = (np.array(agent.coef.reshape(-1, 1)) * x)
+    # agent.error = (1/len(x))*np.sum(
+    #     (y - Xs) ** 2
+    # )
+    agent.error = (1 / len(x)) * np.sum((y - agent.predict_(x, use_bias)) ** 2)
     agent.__post_init__()
 
 
-def compute_all_errors(x, y, agents: list[Agent]):
+def compute_all_errors(x, y, agents: list[Agent], use_bias: bool):
     for agent in agents:
-        compute_error(x, y, agent)
+        compute_error(x, y, agent, use_bias)
 
 
 # Pair agents, Kill 10% worst pairs to limit resources
@@ -165,12 +200,24 @@ def pair_and_cull(
         2 * (len(agents) / 2 - len(paired_agents)),
     )
     logger.info(
-        "Current best agent has coefficients y = %.2fx + %.2f and an error of %.2f",
-        current_best_agent.coef[1],
-        current_best_agent.coef[0],
+        "Current best agent has coefficients %s and an error of %.2f",
+        current_best_agent.coef,
         current_best_agent.error,
     )
     return current_best_agent, paired_agents
+
+
+def compute_child_coefs(
+    p1: Agent, p2: Agent, mutation_coefficient: Union[float, int] = 1
+) -> list[float]:
+    W = np.array([p1.error, p2.error])
+    W /= W.sum()
+
+    # TODO: This for any number of polynomials
+    res_coefs = (p1.coef * W[0] + p2.coef * W[1]) + mutation_coefficient * (
+        np.random.normal(loc=1, scale=2, size=len(p1.coef)) - 1
+    )
+    return res_coefs
 
 
 # Create offspring with balanced weighted coefficients of parents +  small mutations
@@ -191,15 +238,12 @@ def create_offspring(
     Returns:
         list[Agent]: List of children produced by the parents.
     """
-    W = np.array([p1.error, p2.error])
-    W /= W.sum()
+
     n_children = int(np.random.normal(loc=fertility_rate, scale=2, size=1)[0])
 
     children = [
         Agent(
-            name=id_generator(),
-            coef=(p1.coef * W[0] + p2.coef * W[1])
-            + mutation_coefficient * (np.random.normal(loc=1, scale=2, size=2) - 1),
+            name=id_generator(), coef=compute_child_coefs(p1, p2, mutation_coefficient)
         )
         for _ in range(n_children)
     ]
@@ -218,25 +262,28 @@ def create_generation(
         for pair in paired_agents
     ]
     offspring = [item for sublist in offspring for item in sublist]
-    logger.debug(f"{offspring = }")
     logger.info("The new generation has %d agents", len(offspring))
     return offspring
 
 
 # Repeat until x iterations
 def evolution(
+    polynomial: str,
+    use_bias: bool,
+    n_degree: int,
+    n_coefs: int,
     N_initial_population: int = 100,
     N_iterations: int = 10,
     mutation_coefficient: Union[float, int] = 1,
     fertility_rate: Union[float, int] = 3,
-) -> tuple[
-    Iterable[Union[float, int]],
-    Iterable[Union[float, int]],
-    np.ndarray,
-]:
+) -> tuple[Iterable[Union[float, int]], Iterable[Union[float, int]], np.ndarray]:
     """Runs the evolutionary process.
 
     Args:
+        polynomial (int): String representation of the wanted polynomial.
+        use_bias (bool): Use a bias term?
+        n_degree (int): What degree polynomial to fit?
+        n_coefs (int): How many coefficients are used. 2 for y ~x+b,
         N_initial_population (int, optional). Defaults to 100.
         N_iterations (int, optional). Defaults to 10.
         mutation_coefficient (Union[float,int], optional): Determines how much a child's coefficients can mutate. Defaults to 1.
@@ -246,15 +293,15 @@ def evolution(
         tuple[Iterable[Union[float, int]],Iterable[Union[float, int]],np.ndarray]: x,y,best coefficients for each iteration.
     """
     # Initialise world
-    x, y = create_data()
-    agents = initialise_agents(n_coefs=2, n=N_initial_population)
+    x, y = create_data(bias=use_bias, degree=n_degree)
+    agents = initialise_agents(n_coefs=n_coefs, n=N_initial_population)
     best_coefs = []
     # Iterate evolutions
     i = 0
     previous_error = 999999999
     while i < N_iterations:
         logger.info("Iteration number %d", i)
-        compute_all_errors(x, y, agents)
+        compute_all_errors(x, y, agents, use_bias)
         current_best_agent, paired_agents = pair_and_cull(
             agents=agents, survivability=0.8
         )
@@ -262,18 +309,20 @@ def evolution(
         if delta < 0.05:
             logger.info("Stopping iterations, threshold error %.2f reached", delta)
             break
+
         best_coefs.append(current_best_agent.coef)
         del agents
+
         agents = create_generation(paired_agents, mutation_coefficient, fertility_rate)
         del paired_agents
+
         if len(agents) < 2:
             logger.info("Agents died out at iteration %d", i)
             break
+
         i += 1
     return x, y, np.array(best_coefs)
 
 
-logger = init_logger(level_=logging.INFO, log_file="genetic_LR.log")
+logger = init_logger(level_=logging.DEBUG, log_file="genetic_logs.log")
 seed_all(421)
-
-# In between, plot animation with Dash agents reaching the optimal solution
