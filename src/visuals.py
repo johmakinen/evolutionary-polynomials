@@ -54,7 +54,7 @@ def visualise_evolution(
                 {
                     "label": "Play",
                     "method": "animate",
-                    "args": [None, {"frame": {"duration": 150}}],
+                    "args": [None, {"frame": {"duration": 35}}],
                 }
             ],
         }

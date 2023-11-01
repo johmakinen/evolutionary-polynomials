@@ -95,7 +95,7 @@ class Agent:
 
 # Create data
 def create_data(
-    bias: bool = False, degree: int = 1, N: int = 20
+    bias: bool = False, degree: int = 1, N: int = 50
 ) -> tuple[np.ndarray, np.ndarray]:
     """Creates the data from a given polynomial.
 
@@ -107,14 +107,14 @@ def create_data(
     Returns:
         tuple[np.ndarray, np.ndarray]: _description_
     """
-    x = np.arange(0, N)
-    k = np.random.normal(loc=5, scale=2, size=degree)
+    x = np.linspace(-10,10,N)
+    k = np.random.normal(scale=2, size=degree)
     b = 15 if bias else 0
     perfect_agent = Agent(name="perfektio", coef=[b, *k])
 
     y = perfect_agent.predict_(x, use_bias=bias)
     # Add noise
-    y += np.random.normal(loc=y.mean(), scale=y.std() / 2, size=y.shape)
+    y += np.random.normal(loc=y.mean(), scale=y.std(), size=y.shape)
     logger.info("Created %d datapoints with coefficients with y = %sx + %s", N, k, b)
 
     return x, y
@@ -138,7 +138,7 @@ def initialise_agents(n_coefs: int, n: int = 10) -> list[Agent]:
         list[Agent]: List of initial agents
     """
     agents = [
-        Agent(name=id_generator(), coef=np.random.randint(-10, 10, size=n_coefs))
+        Agent(name=id_generator(), coef=np.random.normal(loc=0,scale=10, size=n_coefs))
         for i in range(n)
     ]
     logger.info("Created %d initial agents", n)
@@ -160,13 +160,6 @@ def compute_error(
         agent (Agent)
         use_bias (bool): Is bias term used?
     """
-    # if use_bias:
-    #     Xs = (agent.coef[0] + np.array(agent.coef[1:].reshape(-1, 1)) * x)
-    # else:
-    #     Xs = (np.array(agent.coef.reshape(-1, 1)) * x)
-    # agent.error = (1/len(x))*np.sum(
-    #     (y - Xs) ** 2
-    # )
     agent.error = (1 / len(x)) * np.sum((y - agent.predict_(x, use_bias)) ** 2)
     agent.__post_init__()
 
@@ -213,9 +206,8 @@ def compute_child_coefs(
     W = np.array([p1.error, p2.error])
     W /= W.sum()
 
-    # TODO: This for any number of polynomials
     res_coefs = (p1.coef * W[0] + p2.coef * W[1]) + mutation_coefficient * (
-        np.random.normal(loc=1, scale=2, size=len(p1.coef)) - 1
+        np.random.normal(scale=1, size=len(p1.coef))
     )
     return res_coefs
 
