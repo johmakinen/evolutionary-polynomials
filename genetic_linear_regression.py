@@ -257,9 +257,11 @@ if __name__ == "__main__":
 
 
 # TODO:
-# - Initialise git repo
+# - Initialise git repo x
 # - Add subfolders and modularise code
 # - Add possibility to input any polynomial
 # - Add possibility for user to input polynomial in dash
+# - Profile code
+# - Optimise code
 # - Deploy
 # - Add into CV/github.io
