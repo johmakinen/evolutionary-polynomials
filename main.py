@@ -9,11 +9,11 @@ from src.visuals import visualise_evolution
 
 if __name__ == "__main__":
     # Input
-    polynomial = "y ~ x+x^2"  # only 2d for now
+    polynomial = "y ~ x"  # only 2d for now
     use_bias = True
 
     config = {
-        "N_initial_population": 50,
+        "N_initial_population": 100,
         "N_iterations": 50,
         "mutation_coefficient": 2,
         "fertility_rate": 3,
