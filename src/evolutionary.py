@@ -113,6 +113,7 @@ def create_data(
     perfect_agent = Agent(name="perfektio", coef=[b, *k])
 
     y = perfect_agent.predict_(x, use_bias=bias)
+    del perfect_agent
     # Add noise
     y += np.random.normal(loc=y.mean(), scale=y.std(), size=y.shape)
     logger.info("Created %d datapoints with coefficients with y = %sx + %s", N, k, b)
@@ -139,7 +140,7 @@ def initialise_agents(n_coefs: int, n: int = 10) -> list[Agent]:
     """
     agents = [
         Agent(name=id_generator(), coef=np.random.normal(loc=0,scale=10, size=n_coefs))
-        for i in range(n)
+        for _ in range(n)
     ]
     logger.info("Created %d initial agents", n)
     return agents
@@ -317,4 +318,4 @@ def evolution(
 
 
 logger = init_logger(level_=logging.DEBUG, log_file="genetic_logs.log")
-seed_all(421)
+seed_all(32)
