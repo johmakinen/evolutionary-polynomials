@@ -1,12 +1,15 @@
 "Main evolutionary tools"
 # Imports
+import logging
+import operator
+import os
 import random
 import string
-from dataclasses import dataclass, field
-import os
-from typing import Iterable, Union
-import operator
-import logging
+from dataclasses import dataclass
+from dataclasses import field
+from typing import Iterable
+from typing import Union
+
 import numpy as np
 
 
@@ -79,8 +82,8 @@ class Agent:
         self.sort_index = self.error
 
     def predict_(self, x, use_bias):
-        if use_bias and (len(self.coef) == 1): # Constant function
-            y_pred = np.array([self.coef[0]]*len(x),dtype=np.float64)
+        if use_bias and (len(self.coef) == 1):  # Constant function
+            y_pred = np.array([self.coef[0]] * len(x), dtype=np.float64)
         elif not use_bias:
             y_pred = np.array(self.coef) * np.power(
                 np.array([x] * len(self.coef)).T, np.arange(1, len(self.coef) + 1, 1)
@@ -229,9 +232,9 @@ def create_data(
         tuple[np.ndarray, np.ndarray]: _description_
     """
     if N < 1:
-        logger.info("Invalid data points given (%d)",N)
-        return np.array([]),np.array([])
-    
+        logger.info("Invalid data points given (%d)", N)
+        return np.array([]), np.array([])
+
     x = np.linspace(-10, 10, N)
     k = np.random.normal(scale=2, size=degree)
     b = 15 if bias else 0
@@ -311,13 +314,9 @@ def pair_and_cull(
     """
     agents = sorted(agents, key=operator.attrgetter("error"))
     current_best_agent = agents[0]
-    paired_agents = [
-        (agents[i], agents[i + 1]) for i in range(0, len(agents)-2, 2)
-    ] 
+    paired_agents = [(agents[i], agents[i + 1]) for i in range(0, len(agents) - 2, 2)]
 
-    paired_agents = paired_agents[
-        : int(np.floor((len(agents) / 2) * survivability))
-    ]
+    paired_agents = paired_agents[: int(np.floor((len(agents) / 2) * survivability))]
 
     logger.info(
         "Paired %d agents and culled %d agents",

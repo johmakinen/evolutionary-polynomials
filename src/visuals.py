@@ -87,9 +87,7 @@ def visualise_evolution(
 
         # add the button to the layout and update the
         # title to show the gradient descent step
-        layout = go.Layout(
-            updatemenus=[button], title_text=f"Evolution Step {i}"
-        )
+        layout = go.Layout(updatemenus=[button], title_text=f"Evolution Step {i}")
 
         # create a frame object
         frame = go.Frame(
