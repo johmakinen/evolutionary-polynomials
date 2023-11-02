@@ -83,7 +83,7 @@ class Agent:
 
     def predict_(self, x, use_bias):
         if use_bias and (len(self.coef) == 1):  # Constant function
-            y_pred = np.array([self.coef[0]] * len(x), dtype=np.float64)
+            y_pred = np.repeat(self.coef[0], len(x)).astype(np.float64)
         elif not use_bias:
             y_pred = np.array(self.coef) * np.power(
                 np.array([x] * len(self.coef)).T, np.arange(1, len(self.coef) + 1, 1)
@@ -250,7 +250,7 @@ def create_data(
 
 
 def id_generator(
-    size: int = 20, chars: str = string.ascii_uppercase + string.digits
+    size: int = 10, chars: str = string.ascii_uppercase + string.digits
 ) -> str:
     return "".join(random.choice(chars) for _ in range(size))
 

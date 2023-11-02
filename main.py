@@ -19,27 +19,20 @@ if __name__ == "__main__":
     world = World(name="pop1", **config)
     world.initialise_world_()
     x, y, best_coefs = world.evolve_()
-    visualise_evolution(x, y, best_coefs, use_bias)
+    # visualise_evolution(x, y, best_coefs, use_bias)
 
 
 # TODO:
 #
-# Final logic:
-#     - Take input: "y ~ x+ x^2 ... x^n" and data points
-#         - Read this and determine how many coefficients are needed
-#     - Refactor error computation to compute error for any polynomial
-# - Add possibility to add points into a scatter plot. Read these as data. Make this fast and neat
-#     - Take these point as inputs, override create_data
-#         - Ignore coefficients
-
-# unittests for all components
-# If no bias and only one degree = Straight line and everything breaks
-# Add precommit hooks
 # Profile code
 # Optimise code
-# If one coefficient close to zero, remove it? Or see what powers are given in the original input formula?
-# Add into CV/github.io
+# Make user able to put points on a plot
+#   Take these points as x and y
+#   Then, user inputs the polynomial degree, and whether to use bias term
+#   -> Evolve
 # Deploy in Azure free tier app service
-# Add github workflows (Auto deploy when new stuff)
+# Make GUI usable
+# Add into CV/github.io
+# Add github workflows (pytests + Auto deploy when new stuff)
 # Make UI fancy and add explanations
 #
