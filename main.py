@@ -4,13 +4,13 @@ from src.visuals import visualise_evolution
 if __name__ == "__main__":
 
     # Input
-    polynomial = "y ~ x+x^2+x^3"  # only 2d for now
+    polynomial = "y ~ x+x^2+b"  # only 2d for now
     use_bias = True
 
     config = {
         "N_initial_population": 100,
         "N_max_iter": 50,
-        "mutation_coefficient": 0.4,
+        "mutation_coefficient": 0.5,
         "fertility_rate": 3,
     }
     config["polynomial"] = polynomial

@@ -154,7 +154,7 @@ class World:
         self.n_degree = 0
         self.n_coefs = []
         self.best_coefs = []
-        self.current_iterarion: int = 0
+        self.current_iteration: int = 0
 
     def initialise_world_(
         self,
@@ -186,8 +186,8 @@ class World:
     def evolve_(self):
         # Iterate evolutions
         previous_error = 999999999
-        while self.current_iterarion < self.N_max_iter:
-            logger.info("Iteration number %d", self.current_iterarion)
+        while self.current_iteration < self.N_max_iter:
+            logger.info("Iteration number %d", self.current_iteration)
             compute_all_errors(self.x, self.y, self.population.agents, self.use_bias)
             current_best_agent, paired_agents = pair_and_cull(
                 self.population.agents, survivability=self.survivability
@@ -204,12 +204,13 @@ class World:
                 paired_agents, self.mutation_coefficient, self.fertility_rate
             )
             self.population.agents = agents
+            self.population.size = len(agents)
 
             if len(agents) < 2:
-                logger.info("Agents died out at iteration %d", self.current_iterarion)
+                logger.info("Agents died out at iteration %d", self.current_iteration)
                 break
 
-            self.current_iterarion += 1
+            self.current_iteration += 1
         return self.x, self.y, np.array(self.best_coefs)
 
 
@@ -311,7 +312,7 @@ def pair_and_cull(
     agents = sorted(agents, key=operator.attrgetter("error"))
     current_best_agent = agents[0]
     paired_agents = [
-        (agents[i], agents[i + 1]) for i in range(0, len(agents), 2)
+        (agents[i], agents[i + 1]) for i in range(0, len(agents)-2, 2)
     ] 
 
     paired_agents = paired_agents[
@@ -390,4 +391,4 @@ def create_generation(
 
 
 logger = init_logger(level_=logging.INFO, log_file="genetic_logs.log")
-seed_all(32)
+seed_all(22)
