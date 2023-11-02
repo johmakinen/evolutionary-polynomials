@@ -20,26 +20,31 @@ data_create_data = [
     (True, 3, 20),
     (False, 1, 10),
     (False, 3, 20),
-]  # future: (True,0,10),(True,1,0),(False,0,10),(False,1,0)
+    (True, 0, 10),
+    (False, 0, 10),
+] 
 
 
 @pytest.mark.parametrize(
-    "bias,degree,N", data_create_data, ids=["1", "2", "3", "4"]
+    "bias,degree,N", data_create_data
 )  # ,"5","6","7","8"
 def test_create_data(bias, degree, N):
     x, y = create_data(bias, degree, N)
-
     assert len(x) == len(y)
     assert len(x) == N
     assert max(x) != min(x)
-    assert max(y) != min(y)
-
+    if (degree == 0) and (N > 0):
+        assert max(y) == min(y)
+    elif (N > 0):
+        assert max(y) != min(y)
+    else:
+        assert np.array_equal(x,np.array([]))
+        assert np.array_equal(y,np.array([]))
 
 # initialise_agents ############################################
 data_initialise_agents = [(1, 1), (3, 5), (5, 6)]  # Future: ,(0,1),(1,0)
 
-
-@pytest.mark.parametrize("n_coefs,n", data_initialise_agents, ids=["1", "2", "3"])
+@pytest.mark.parametrize("n_coefs,n", data_initialise_agents)
 def test_initialise_agents(n_coefs, n):
     agents = initialise_agents(n_coefs, n)
 
@@ -92,7 +97,7 @@ data_compute_child_coefs = [
 
 
 @pytest.mark.parametrize(
-    "p1,p2,mutation_coefficient,expected", data_compute_child_coefs, ids=["1"]
+    "p1,p2,mutation_coefficient,expected", data_compute_child_coefs
 )
 def test_compute_child_coefs(p1, p2, mutation_coefficient, expected):
     W = np.array([p1.error, p2.error])
@@ -131,19 +136,22 @@ data_pair_and_cull = [
             Agent(name="8", coef=[1, 1], error=8),
             Agent(name="9", coef=[1, 1], error=9),
             Agent(name="10", coef=[1, 1], error=10),
-        ],0.8, 4
+        ],
+        0.8,
+        4,
     )
 ]
 
 
-@pytest.mark.parametrize("agents,survivability,expected", data_pair_and_cull, ids=["1"])
+@pytest.mark.parametrize("agents,survivability,expected", data_pair_and_cull)
 def test_pair_and_cull(agents, survivability, expected):
     current_best_agent, paired_agents = pair_and_cull(agents, survivability)
 
-    assert isinstance(current_best_agent,Agent)
-    assert paired_agents[0][0].error+paired_agents[0][1].error == 3
-    assert paired_agents[3][0].error+paired_agents[3][1].error == 15
+    assert isinstance(current_best_agent, Agent)
+    assert paired_agents[0][0].error + paired_agents[0][1].error == 3
+    assert paired_agents[3][0].error + paired_agents[3][1].error == 15
     assert len(paired_agents) == expected
+
 
 #####
 # pytest src/tests/test_utils.py -v # This file

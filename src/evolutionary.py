@@ -79,7 +79,9 @@ class Agent:
         self.sort_index = self.error
 
     def predict_(self, x, use_bias):
-        if not use_bias:
+        if use_bias and (len(self.coef) == 1): # Constant function
+            y_pred = np.array([self.coef[0]]*len(x),dtype=np.float64)
+        elif not use_bias:
             y_pred = np.array(self.coef) * np.power(
                 np.array([x] * len(self.coef)).T, np.arange(1, len(self.coef) + 1, 1)
             )
@@ -225,6 +227,10 @@ def create_data(
     Returns:
         tuple[np.ndarray, np.ndarray]: _description_
     """
+    if N < 1:
+        logger.info("Invalid data points given (%d)",N)
+        return np.array([]),np.array([])
+    
     x = np.linspace(-10, 10, N)
     k = np.random.normal(scale=2, size=degree)
     b = 15 if bias else 0
