@@ -3,7 +3,6 @@
 import random
 import string
 from dataclasses import dataclass, field
-from itertools import pairwise
 import os
 from typing import Iterable, Union
 import operator
@@ -72,7 +71,7 @@ class Agent:
     """
 
     name: str
-    coef: list  # [b,x0,x1,x2,...]
+    coef: Iterable[Union[float, int]]  # [b,x0,x1,x2,...]
     error: float = np.inf
     sort_index: int = field(init=False)
 
@@ -84,26 +83,32 @@ class Agent:
             y_pred = np.array(self.coef) * np.power(
                 np.array([x] * len(self.coef)).T, np.arange(1, len(self.coef) + 1, 1)
             )
+            y_pred = np.sum(y_pred, axis=1)
         else:
-            y_pred = np.array(self.coef)[0] + np.power(
-                np.array([x] * len(self.coef[1:])).T,
-                np.arange(1, len(self.coef[1:]) + 1, 1),
+            y_pred = np.array(self.coef)[0] + np.sum(
+                np.array(self.coef[1:])
+                * np.power(
+                    np.array([x] * len(self.coef[1:])).T,
+                    np.arange(1, len(self.coef[1:]) + 1, 1),
+                ),
+                axis=1,
             )
-        y_pred = np.sum(y_pred, axis=1)
+
         return y_pred
 
 
 @dataclass
 class Population:
     """A Dataclass for a population of agents.
-        Each Population has:
-        - Name
-        - List of agents within the population
-        - Population size
-        - Population level fertility rate
-        - Population level mutation coefficient
-        - Population level survivability
+    Each Population has:
+    - Name
+    - List of agents within the population
+    - Population size
+    - Population level fertility rate
+    - Population level mutation coefficient
+    - Population level survivability
     """
+
     name: str
     agents: list[Agent]
     size: int = 0
@@ -116,6 +121,7 @@ class World:
     """Class for the world. Within the world there are population(s). Each world tries to solve one polynomial. You can evolve the world in time, and consequently evolve the population(s).
     Only one population per world for now.
     """
+
     def __init__(
         self,
         name: str,
@@ -128,7 +134,7 @@ class World:
         N_initial_population: int = 100,
         N_iterations: int = 10,
         N_datapoints: int = 50,
-    ):  
+    ):
         self.name = name
         self.polynomial = polynomial
         self.use_bias = use_bias
@@ -148,18 +154,22 @@ class World:
         self.best_coefs = []
         self.current_iterarion: int = 0
 
-    def initialise_world_(self,x:Iterable[Union[float, int]]=None,y:Iterable[Union[float, int]]=None):
+    def initialise_world_(
+        self,
+        x: Iterable[Union[float, int]] = None,
+        y: Iterable[Union[float, int]] = None,
+    ):
         self.n_degree = self.polynomial.count("x")
         self.n_coefs = self.n_degree + 1 if self.use_bias else self.n_degree
         if (not x) or (not y):
             self.x, self.y = create_data(
                 bias=self.use_bias, degree=self.n_degree, N=self.N_datapoints
             )
-            #TODO: N_datapoints is not optional here
+            # TODO: N_datapoints is not optional here
         else:
             self.x = x
             self.y = y
-            #TODO: N_datapoints is optional here (not used)
+            # TODO: N_datapoints is optional here (not used)
 
         agents = initialise_agents(n_coefs=self.n_coefs, n=self.N_initial_population)
         self.population = Population(
@@ -271,6 +281,7 @@ def compute_error(
     """
     agent.error = (1 / len(x)) * np.sum((y - agent.predict_(x, use_bias)) ** 2)
     agent.__post_init__()
+    return agent.error
 
 
 def compute_all_errors(x, y, agents: list[Agent], use_bias: bool):
@@ -293,9 +304,14 @@ def pair_and_cull(
     """
     agents = sorted(agents, key=operator.attrgetter("error"))
     current_best_agent = agents[0]
-    paired_agents = list(pairwise(agents))[
+    paired_agents = [
+        (agents[i], agents[i + 1]) for i in range(0, len(agents), 2)
+    ] 
+
+    paired_agents = paired_agents[
         : int(np.floor((len(agents) / 2) * survivability))
     ]
+
     logger.info(
         "Paired %d agents and culled %d agents",
         len(paired_agents) * 2,
@@ -313,7 +329,7 @@ def compute_child_coefs(
     p1: Agent, p2: Agent, mutation_coefficient: Union[float, int] = 1
 ) -> list[float]:
     W = np.array([p1.error, p2.error])
-    W /= W.sum()
+    W = 1 - W / W.sum()  # Inverse weights, less error = more weight
 
     res_coefs = (p1.coef * W[0] + p2.coef * W[1]) + mutation_coefficient * (
         np.random.normal(scale=1, size=len(p1.coef))
