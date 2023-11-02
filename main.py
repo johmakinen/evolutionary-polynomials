@@ -2,7 +2,6 @@ from src.evolutionary import World
 from src.visuals import visualise_evolution
 
 if __name__ == "__main__":
-
     # Input
     polynomial = "y ~ x+x^2+b"  # only 2d for now
     use_bias = True
