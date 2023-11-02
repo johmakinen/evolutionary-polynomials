@@ -32,8 +32,7 @@ if __name__ == "__main__":
 # - Add possibility to add points into a scatter plot. Read these as data. Make this fast and neat
 #     - Take these point as inputs, override create_data
 #         - Ignore coefficients
-# Visuals docstrings and type annotations
-# All docstrings update
+
 # unittests for all components
 # If no bias and only one degree = Straight line and everything breaks
 # Add precommit hooks
