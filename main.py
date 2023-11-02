@@ -1,9 +1,8 @@
 from src.evolutionary import (
     evolution,
-    create_data,
-    initialise_agents,
-    compute_all_errors,
-    compute_child_coefs,
+    Agent,
+    Population,
+    World
 )
 from src.visuals import visualise_evolution
 
@@ -13,19 +12,19 @@ if __name__ == "__main__":
     use_bias = True
 
     config = {
-        "N_initial_population": 200,
-        "N_iterations": 100,
+        "N_initial_population": 100,
+        "N_max_iter": 50,
         "mutation_coefficient": 0.4,
         "fertility_rate": 3,
     }
     config["polynomial"] = polynomial
     config["use_bias"] = use_bias
-    config["n_degree"] = config["polynomial"].count("x")
-    config["n_coefs"] = (
-        config["n_degree"] + 1 if config["use_bias"] else config["n_degree"]
-    )
-    x, y, best_coefs = evolution(**config)
 
+
+    # Backend
+    world = World(name="pop1",**config)
+    world.initialise_world_()
+    x, y, best_coefs = world.evolve_()
     visualise_evolution(x, y, best_coefs, use_bias)
 
 
@@ -38,8 +37,12 @@ if __name__ == "__main__":
 # - Add possibility to add points into a scatter plot. Read these as data. Make this fast and neat
 #     - Take these point as inputs, override create_data
 #         - Ignore coefficients
+# From dataclass to basic class (population and world)
 # Visuals docstrings and type annotations
 # All docstrings update
+# Population class
+# World Class?
+# Refactor using above classes
 # unittests for all components
 # If no bias and only one degree = Straight line and everything breaks
 # Add precommit hooks

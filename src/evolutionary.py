@@ -93,6 +93,98 @@ class Agent:
         return y_pred
 
 
+@dataclass
+class Population:
+    name: str
+    agents: list[Agent]
+    total_error: float = np.inf
+    size: int = 0
+    fertility_rate: Union[float, int] = 3
+    mutation_coefficient: Union[float, int] = 0.4
+    survivability: Union[float, int] = 0.8
+
+
+class World:
+    def __init__(
+        self,
+        name: str,
+        polynomial: str,
+        use_bias: bool = True,
+        mutation_coefficient: Union[float, int] = 1,
+        fertility_rate: Union[float, int] = 3,
+        survivability: Union[float, int] = 0.8,
+        N_max_iter: int = 50,
+        N_initial_population: int = 100,
+        N_iterations: int = 10,
+        N_datapoints: int = 50,
+    ):
+        self.name = name
+        self.polynomial = polynomial
+        self.use_bias = use_bias
+        self.mutation_coefficient = mutation_coefficient
+        self.fertility_rate = fertility_rate
+        self.survivability = survivability
+        self.N_max_iter = N_max_iter
+        self.N_initial_population = N_initial_population
+        self.N_iterations = N_iterations
+        self.N_datapoints = N_datapoints
+
+        self.population = []
+        self.x = []
+        self.y = []
+        self.n_degree = 0
+        self.n_coefs = []
+        self.best_coefs = 0
+        self.current_iterarion: int = 0
+
+    def initialise_world_(self):
+        self.n_degree = self.polynomial.count("x")
+        self.n_coefs = self.n_degree + 1 if self.use_bias else self.n_degree
+
+        self.x, self.y = create_data(
+            bias=self.use_bias, degree=self.n_degree, N=self.N_datapoints
+        )
+        agents = initialise_agents(n_coefs=self.n_coefs, n=self.N_initial_population)
+        self.population = Population(
+            "pop1",
+            agents=agents,
+            size=len(agents),
+            fertility_rate=self.fertility_rate,
+            mutation_coefficient=self.mutation_coefficient,
+            survivability=self.survivability,
+        )
+        self.best_coefs = []
+
+    def evolve_(self):
+        # Iterate evolutions
+        previous_error = 999999999
+        while self.current_iterarion < self.N_max_iter:
+            logger.info("Iteration number %d", self.current_iterarion)
+            compute_all_errors(self.x, self.y, self.population.agents, self.use_bias)
+            current_best_agent, paired_agents = pair_and_cull(
+                self.population.agents, survivability=self.survivability
+            )
+
+            delta = abs((current_best_agent.error - previous_error) / previous_error)
+            if delta < 0.05:
+                logger.info("Stopping iterations, threshold error %.2f reached", delta)
+                break
+
+            self.best_coefs.append(current_best_agent.coef)
+
+            agents = create_generation(
+                paired_agents, self.mutation_coefficient, self.fertility_rate
+            )
+            self.population.agents = agents
+
+            if len(agents) < 2:
+                logger.info("Agents died out at iteration %d", self.current_iterarion)
+                break
+
+            self.current_iterarion += 1
+        return self.x, self.y, np.array(self.best_coefs)
+
+
 # Create data
 def create_data(
     bias: bool = False, degree: int = 1, N: int = 50
@@ -107,7 +199,7 @@ def create_data(
     Returns:
         tuple[np.ndarray, np.ndarray]: _description_
     """
-    x = np.linspace(-10,10,N)
+    x = np.linspace(-10, 10, N)
     k = np.random.normal(scale=2, size=degree)
     b = 15 if bias else 0
     perfect_agent = Agent(name="perfektio", coef=[b, *k])
@@ -139,7 +231,7 @@ def initialise_agents(n_coefs: int, n: int = 10) -> list[Agent]:
         list[Agent]: List of initial agents
     """
     agents = [
-        Agent(name=id_generator(), coef=np.random.normal(loc=0,scale=10, size=n_coefs))
+        Agent(name=id_generator(), coef=np.random.normal(loc=0, scale=10, size=n_coefs))
         for _ in range(n)
     ]
     logger.info("Created %d initial agents", n)
@@ -257,64 +349,6 @@ def create_generation(
     offspring = [item for sublist in offspring for item in sublist]
     logger.info("The new generation has %d agents", len(offspring))
     return offspring
-
-
-# Repeat until x iterations
-def evolution(
-    polynomial: str,
-    use_bias: bool,
-    n_degree: int,
-    n_coefs: int,
-    N_initial_population: int = 100,
-    N_iterations: int = 10,
-    mutation_coefficient: Union[float, int] = 1,
-    fertility_rate: Union[float, int] = 3,
-) -> tuple[Iterable[Union[float, int]], Iterable[Union[float, int]], np.ndarray]:
-    """Runs the evolutionary process.
-
-    Args:
-        polynomial (int): String representation of the wanted polynomial.
-        use_bias (bool): Use a bias term?
-        n_degree (int): What degree polynomial to fit?
-        n_coefs (int): How many coefficients are used. 2 for y ~x+b,
-        N_initial_population (int, optional). Defaults to 100.
-        N_iterations (int, optional). Defaults to 10.
-        mutation_coefficient (Union[float,int], optional): Determines how much a child's coefficients can mutate. Defaults to 1.
-        fertility_rate (Union[float,int], optional): Determines how many children on average a pair should have. Defaults to 3.
-
-    Returns:
-        tuple[Iterable[Union[float, int]],Iterable[Union[float, int]],np.ndarray]: x,y,best coefficients for each iteration.
-    """
-    # Initialise world
-    x, y = create_data(bias=use_bias, degree=n_degree)
-    agents = initialise_agents(n_coefs=n_coefs, n=N_initial_population)
-    best_coefs = []
-    # Iterate evolutions
-    i = 0
-    previous_error = 999999999
-    while i < N_iterations:
-        logger.info("Iteration number %d", i)
-        compute_all_errors(x, y, agents, use_bias)
-        current_best_agent, paired_agents = pair_and_cull(
-            agents=agents, survivability=0.8
-        )
-        delta = abs((current_best_agent.error - previous_error) / previous_error)
-        if delta < 0.05:
-            logger.info("Stopping iterations, threshold error %.2f reached", delta)
-            break
-
-        best_coefs.append(current_best_agent.coef)
-        del agents
-
-        agents = create_generation(paired_agents, mutation_coefficient, fertility_rate)
-        del paired_agents
-
-        if len(agents) < 2:
-            logger.info("Agents died out at iteration %d", i)
-            break
-
-        i += 1
-    return x, y, np.array(best_coefs)
 
 
 logger = init_logger(level_=logging.DEBUG, log_file="genetic_logs.log")
