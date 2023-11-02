@@ -1,12 +1,8 @@
-from src.evolutionary import (
-    evolution,
-    Agent,
-    Population,
-    World
-)
+from src.evolutionary import World
 from src.visuals import visualise_evolution
 
 if __name__ == "__main__":
+
     # Input
     polynomial = "y ~ x+x^2+x^3"  # only 2d for now
     use_bias = True
@@ -20,9 +16,8 @@ if __name__ == "__main__":
     config["polynomial"] = polynomial
     config["use_bias"] = use_bias
 
-
     # Backend
-    world = World(name="pop1",**config)
+    world = World(name="pop1", **config)
     world.initialise_world_()
     x, y, best_coefs = world.evolve_()
     visualise_evolution(x, y, best_coefs, use_bias)
@@ -37,12 +32,8 @@ if __name__ == "__main__":
 # - Add possibility to add points into a scatter plot. Read these as data. Make this fast and neat
 #     - Take these point as inputs, override create_data
 #         - Ignore coefficients
-# From dataclass to basic class (population and world)
 # Visuals docstrings and type annotations
 # All docstrings update
-# Population class
-# World Class?
-# Refactor using above classes
 # unittests for all components
 # If no bias and only one degree = Straight line and everything breaks
 # Add precommit hooks

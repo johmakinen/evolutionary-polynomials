@@ -3,7 +3,7 @@ import sys
 from typing import Iterable, Union
 import numpy as np
 import logging
-from src.evolutionary import init_logger, Agent
+from src.evolutionary import Agent
 
 import plotly.graph_objects as go
 
@@ -17,6 +17,14 @@ def visualise_evolution(
     best_coefs: np.ndarray,
     use_bias: bool,
 ):
+    """Function to visualise the results of the evolutions
+
+    Args:
+        x (Iterable[Union[float, int]]): x data
+        y (Iterable[Union[float, int]]): y data
+        best_coefs (np.ndarray): array of best coefficients for each iteration
+        use_bias (bool): Whether there is a bias term in the coefficient matrix
+    """
     # Create the predicted lines using a perfect agent
 
     y_lines = np.zeros(shape=(len(x), len(best_coefs[:, 0])))
@@ -44,8 +52,14 @@ def visualise_evolution(
 
     # create a frame for every line y
     for i, y_line in enumerate(y_lines):
+        neg_error = np.clip(np.array(y-y_line),0,np.inf)
+        pos_error = np.abs(np.clip(np.array(y-y_line),-np.inf,0))
         # update the line
-        line = go.Scatter(x=x, y=y_line)
+        line = go.Scatter(
+            x=x,
+            y=y_line,
+            error_y={"type": "data", "symmetric": False, "array": neg_error, "arrayminus": pos_error,"color":"#ff0000"},line=dict(color="#b900ff")
+        )
 
         # create the button
         button = {

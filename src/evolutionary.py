@@ -95,9 +95,17 @@ class Agent:
 
 @dataclass
 class Population:
+    """A Dataclass for a population of agents.
+        Each Population has:
+        - Name
+        - List of agents within the population
+        - Population size
+        - Population level fertility rate
+        - Population level mutation coefficient
+        - Population level survivability
+    """
     name: str
     agents: list[Agent]
-    total_error: float = np.inf
     size: int = 0
     fertility_rate: Union[float, int] = 3
     mutation_coefficient: Union[float, int] = 0.4
@@ -105,6 +113,9 @@ class Population:
 
 
 class World:
+    """Class for the world. Within the world there are population(s). Each world tries to solve one polynomial. You can evolve the world in time, and consequently evolve the population(s).
+    Only one population per world for now.
+    """
     def __init__(
         self,
         name: str,
@@ -117,7 +128,7 @@ class World:
         N_initial_population: int = 100,
         N_iterations: int = 10,
         N_datapoints: int = 50,
-    ):
+    ):  
         self.name = name
         self.polynomial = polynomial
         self.use_bias = use_bias
@@ -134,16 +145,22 @@ class World:
         self.y = []
         self.n_degree = 0
         self.n_coefs = []
-        self.best_coefs = 0
+        self.best_coefs = []
         self.current_iterarion: int = 0
 
-    def initialise_world_(self):
+    def initialise_world_(self,x:Iterable[Union[float, int]]=None,y:Iterable[Union[float, int]]=None):
         self.n_degree = self.polynomial.count("x")
         self.n_coefs = self.n_degree + 1 if self.use_bias else self.n_degree
+        if (not x) or (not y):
+            self.x, self.y = create_data(
+                bias=self.use_bias, degree=self.n_degree, N=self.N_datapoints
+            )
+            #TODO: N_datapoints is not optional here
+        else:
+            self.x = x
+            self.y = y
+            #TODO: N_datapoints is optional here (not used)
 
-        self.x, self.y = create_data(
-            bias=self.use_bias, degree=self.n_degree, N=self.N_datapoints
-        )
         agents = initialise_agents(n_coefs=self.n_coefs, n=self.N_initial_population)
         self.population = Population(
             "pop1",
@@ -153,7 +170,6 @@ class World:
             mutation_coefficient=self.mutation_coefficient,
             survivability=self.survivability,
         )
-        self.best_coefs = []
 
     def evolve_(self):
         # Iterate evolutions
@@ -351,5 +367,5 @@ def create_generation(
     return offspring
 
 
-logger = init_logger(level_=logging.DEBUG, log_file="genetic_logs.log")
+logger = init_logger(level_=logging.INFO, log_file="genetic_logs.log")
 seed_all(32)
