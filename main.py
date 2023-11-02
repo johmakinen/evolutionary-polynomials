@@ -24,8 +24,6 @@ if __name__ == "__main__":
 
 # TODO:
 #
-# Profile code
-# Optimise code
 # Make user able to put points on a plot
 #   Take these points as x and y
 #   Then, user inputs the polynomial degree, and whether to use bias term

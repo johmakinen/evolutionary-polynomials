@@ -100,6 +100,6 @@ def visualise_evolution(
 
     # combine the graph_objects into a figure
     fig = go.Figure(data=[points, line], frames=frames, layout=layout)
-
+    return fig
     # show our animation!
-    fig.show()
+    # fig.show()
