@@ -27,7 +27,8 @@ if __name__ == "__main__":
 # Make user able to put points on a plot
 #   Take these points as x and y
 #   Then, user inputs the polynomial degree, and whether to use bias term
-#   -> Evolve
+#   -> Evolve, but only after both points and polynomial degree are given
+# Add config parameters to play with
 # Deploy in Azure free tier app service
 # Make GUI usable
 # Add into CV/github.io

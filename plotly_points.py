@@ -14,13 +14,8 @@ from src.evolutionary import World
 from src.visuals import visualise_evolution
 
 # create image and plotly express object
-# img = np.random.randint(0, 255, (90, 160))
-# fig = px.imshow(np.zeros(shape=(100,160)), color_continuous_scale='gray',origin='lower')
-# fig = px.scatter()
-# create image and plotly express object
-fig = px.imshow(np.zeros(shape=(90, 160, 4)), origin="lower", extent=(-10, 10, -5, 5))
+fig = px.imshow(np.zeros(shape=(90, 160, 4)), origin="lower")
 fig.add_scatter(x=[0], y=[0], mode="markers", marker_color="purple", marker_size=5)
-# fig = go.Figure(layout_yaxis_range=[-20,20],layout_xaxis_range=[-20,20])
 xs = []
 ys = []
 
@@ -182,9 +177,6 @@ def create_shape(x, y, size=4, color="rgba(39,43,48,255)"):
     ]
     return shape
 
-
-# TODO: Evolve page is same but use visuals
-# TODO: Modify both pages to look alike
 
 if __name__ == "__main__":
     app.run_server(debug=True, port=8053)
