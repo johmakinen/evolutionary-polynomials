@@ -3,7 +3,7 @@ from src.visuals import visualise_evolution
 
 if __name__ == "__main__":
     # Input
-    polynomial = "y ~ x+x^2+b"  # only 2d for now
+    polynomial = "y ~ x+x^2+x^3+b"  # only 2d for now
     use_bias = True
 
     config = {
@@ -11,6 +11,7 @@ if __name__ == "__main__":
         "N_max_iter": 50,
         "mutation_coefficient": 0.5,
         "fertility_rate": 3,
+        "N_datapoints": 4,
     }
     config["polynomial"] = polynomial
     config["use_bias"] = use_bias
@@ -19,7 +20,7 @@ if __name__ == "__main__":
     world = World(name="pop1", **config)
     world.initialise_world_()
     x, y, best_coefs = world.evolve_()
-    # visualise_evolution(x, y, best_coefs, use_bias)
+    visualise_evolution(x, y, best_coefs, use_bias, ret=False)
 
 
 # TODO:

@@ -14,8 +14,18 @@ from src.evolutionary import World
 from src.visuals import visualise_evolution
 
 # create image and plotly express object
-fig = px.imshow(np.zeros(shape=(90, 160, 4)), origin="lower")
+init_xrange = [0, 32]
+init_yrange = [0, 20]
+# fig = px.imshow(np.zeros(shape=(init_yrange[1],init_xrange[1], 4)), origin="lower")
+# fig.add_scatter(x=[0], y=[0], mode="markers", marker_color="purple", marker_size=5)
+fig = go.Figure(
+    go.Image(
+        z=np.zeros(shape=(init_yrange[1], init_xrange[1], 4)),
+        opacity=0,
+    )
+)
 fig.add_scatter(x=[0], y=[0], mode="markers", marker_color="purple", marker_size=5)
+fig.update_yaxes(range=init_yrange)
 xs = []
 ys = []
 
@@ -26,6 +36,15 @@ fig.update_traces(hovertemplate=None, hoverinfo="none")
 # hide color bar
 fig.update_coloraxes(showscale=False)
 
+points = go.Scatter()
+layout2 = go.Layout(
+    title_text="Evolutionary algorithm animation",
+    yaxis={"range": init_yrange},
+    xaxis={"range": init_xrange},
+)
+
+# combine the graph_objects into a figure
+fig2 = go.Figure(data=[points], layout=layout2)
 # Build App
 app = Dash(
     __name__,
@@ -51,7 +70,7 @@ app.layout = dbc.Container(
                     ),
                     dcc.Graph(
                         id="graph2",
-                        figure=fig,
+                        figure=fig2,
                         config={
                             "scrollZoom": True,
                             "displayModeBar": False,
@@ -112,7 +131,6 @@ def get_click(graph_figure, clickData):
         # update figure data (in this case it's the last trace)
         graph_figure["data"][1].update(x=scatter_x)
         graph_figure["data"][1].update(y=scatter_y)
-
     return graph_figure
 
 
@@ -125,13 +143,13 @@ def visualise_evolution_(graph_figure, n_clicks):
     if not n_clicks:
         raise PreventUpdate
 
-    polynomial = "y ~ x+b"  # only 2d for now
+    polynomial = "y ~ x+x^2+b"  # only 2d for now
     use_bias = True
 
     config = {
         "N_initial_population": 100,
         "N_max_iter": 50,
-        "mutation_coefficient": 5,
+        "mutation_coefficient": 0.5,
         "fertility_rate": 3,
     }
     config["polynomial"] = polynomial
@@ -142,6 +160,8 @@ def visualise_evolution_(graph_figure, n_clicks):
     world.initialise_world_(x=xs, y=ys)
     x, y, best_coefs = world.evolve_()
     graph_figure = visualise_evolution(x, y, best_coefs, use_bias)
+    # graph_figure["layout"]["yaxis"].update(autorange=True)
+
     return graph_figure
 
 
