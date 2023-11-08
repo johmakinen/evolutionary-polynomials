@@ -3,7 +3,7 @@ from src.visuals import visualise_evolution
 
 if __name__ == "__main__":
     # Input
-    polynomial = "y ~ x+x^2+x^3+b"  # only 2d for now
+    polynomial = "y ~ x + x^2 + x^3 + b"  # only 2d for now
     use_bias = True
 
     config = {
@@ -11,7 +11,7 @@ if __name__ == "__main__":
         "N_max_iter": 50,
         "mutation_coefficient": 0.5,
         "fertility_rate": 3,
-        "N_datapoints": 4,
+        "N_datapoints": 50,
     }
     config["polynomial"] = polynomial
     config["use_bias"] = use_bias
@@ -25,10 +25,9 @@ if __name__ == "__main__":
 
 # TODO:
 #
-# Make user able to put points on a plot
-#   Take these points as x and y
-#   Then, user inputs the polynomial degree, and whether to use bias term
+# user inputs the polynomial degree, and whether to use bias term
 #   -> Evolve, but only after both points and polynomial degree are given
+# Make graph larger
 # Add config parameters to play with
 # Deploy in Azure free tier app service
 # Make GUI usable

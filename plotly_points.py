@@ -14,37 +14,47 @@ from src.evolutionary import World
 from src.visuals import visualise_evolution
 
 # create image and plotly express object
-init_xrange = [0, 32]
-init_yrange = [0, 20]
+init_xrange = [-50, 50]
+init_yrange = [-25, 25]
 # fig = px.imshow(np.zeros(shape=(init_yrange[1],init_xrange[1], 4)), origin="lower")
 # fig.add_scatter(x=[0], y=[0], mode="markers", marker_color="purple", marker_size=5)
 fig = go.Figure(
     go.Image(
-        z=np.zeros(shape=(init_yrange[1], init_xrange[1], 4)),
+        z=np.zeros(shape=(init_yrange[1] * 3, init_xrange[1] * 3, 4)),
         opacity=0,
+        dx=1,
+        dy=1,
+        x0=-init_xrange[1] * 3 / 2,
+        y0=-init_yrange[1] * 3 / 2,
     )
 )
-fig.add_scatter(x=[0], y=[0], mode="markers", marker_color="purple", marker_size=5)
+fig.add_trace(
+    go.Scatter(
+        x=[0],
+        y=[0],
+        mode="markers",
+        marker_color="purple",
+        marker_size=5,
+        name="init_point",
+    )
+)
+fig.add_trace(
+    go.Scatter(x=[0], y=[0], mode="markers", marker_color="white", marker_size=5)
+)
+
+# fig.add_scatter(x=[0], y=[0], mode="markers", marker_color="purple", marker_size=0.1 if first_ else 5)
+first_ = False
 fig.update_yaxes(range=init_yrange)
 xs = []
 ys = []
 
 # update layout
-layout = go.Layout(title_text="Evolutionary algorithm animation")
+layout = go.Layout(title_text="Evolutionary algorithm animation", width=20)
 fig.update_layout(layout)
 fig.update_traces(hovertemplate=None, hoverinfo="none")
 # hide color bar
 fig.update_coloraxes(showscale=False)
 
-points = go.Scatter()
-layout2 = go.Layout(
-    title_text="Evolutionary algorithm animation",
-    yaxis={"range": init_yrange},
-    xaxis={"range": init_xrange},
-)
-
-# combine the graph_objects into a figure
-fig2 = go.Figure(data=[points], layout=layout2)
 # Build App
 app = Dash(
     __name__,
@@ -67,17 +77,9 @@ app.layout = dbc.Container(
                             "scrollZoom": True,
                             "displayModeBar": False,
                         },
-                    ),
-                    dcc.Graph(
-                        id="graph2",
-                        figure=fig2,
-                        config={
-                            "scrollZoom": True,
-                            "displayModeBar": False,
-                        },
-                    ),
+                    )
                 ],
-                width={"size": 5, "offset": 0},
+                width={"size": 10, "offset": 0},
             ),
             justify="around",
         ),
@@ -128,22 +130,25 @@ def get_click(graph_figure, clickData):
         scatter_x.append(x)
         scatter_y.append(y)
 
+        print(graph_figure["data"][1])
         # update figure data (in this case it's the last trace)
         graph_figure["data"][1].update(x=scatter_x)
         graph_figure["data"][1].update(y=scatter_y)
+        # graph_figure["data"][1].update(marker={'color': 'purple', 'size': 5})
     return graph_figure
 
 
 @app.callback(
-    Output("graph2", "figure"),
-    State("graph2", "figure"),
+    Output("graph", "figure", allow_duplicate=True),
+    State("graph", "figure"),
     Input("evolve_button", "n_clicks"),
+    prevent_initial_call=True,
 )
 def visualise_evolution_(graph_figure, n_clicks):
     if not n_clicks:
         raise PreventUpdate
 
-    polynomial = "y ~ x+x^2+b"  # only 2d for now
+    polynomial = "y ~ x+x^2+x^3+b"  # only 2d for now
     use_bias = True
 
     config = {
@@ -160,6 +165,8 @@ def visualise_evolution_(graph_figure, n_clicks):
     world.initialise_world_(x=xs, y=ys)
     x, y, best_coefs = world.evolve_()
     graph_figure = visualise_evolution(x, y, best_coefs, use_bias)
+    xs.clear()
+    ys.clear()
     # graph_figure["layout"]["yaxis"].update(autorange=True)
 
     return graph_figure
